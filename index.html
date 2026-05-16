@@ -176,11 +176,11 @@ th{font-weight:600;background:var(--g1);font-size:12px;}
 <table>
 <tr><th>#</th><th>说</th><th>做</th></tr>
 <tr><td>1</td><td style="color:#e91e63;">聊天里朋友发了个活动地址</td><td>拖出球指向地址，说"去这儿多久"</td></tr>
-<tr><td>2</td><td style="color:#e91e63;">刷小红书看到喜欢的内容</td><td>拖出球指向卡片，说"收藏一下"</td></tr>
-<tr><td>3</td><td style="color:#e91e63;">淘宝看到一件衣服，想比个价</td><td>拖出球指向商品，说"找个便宜的"</td></tr>
-<tr><td>4</td><td style="color:#e91e63;">在地图上找某个区域的酒店</td><td>拖出球在区域转圈，说"给我搜这个区域内的酒店"</td></tr>
-<tr><td>5</td><td style="color:#e91e63;">日历上想加个事儿</td><td>拖出球指向某天，说"这天下午帮我约个牙医"</td></tr>
-<tr><td>6</td><td style="color:#e91e63;">想修一下照片</td><td>拖出球指向人脸，说"把我P白一点"</td></tr>
+<tr><td>2</td><td style="color:#e91e63;">看到喜欢的图片</td><td>拖出球指向卡片，说"把这张保存下来"</td></tr>
+<tr><td>3</td><td style="color:#e91e63;">在小红书看到一部影片讲解</td><td>拖出球，问"这是什么电视剧"</td></tr>
+<tr><td>4</td><td style="color:#e91e63;">微信聊天提到了周末行程</td><td>拖出球，说"把这个事情记下来"</td></tr>
+<tr><td>5</td><td style="color:#e91e63;">想修一下照片</td><td>拖出球指向人脸，说"把我P白一点"</td></tr>
+<tr><td>6</td><td style="color:#e91e63;">小红书看到喜欢的衣服</td><td>拖出球，说"在淘宝上找同款"</td></tr>
 </table>
 <div class="prompt">"大概就是这些类型的事情，但不限于这些。好，现在你来试试。"</div>
 </div>
@@ -189,6 +189,7 @@ th{font-weight:600;background:var(--g1);font-size:12px;}
 <div class="step" data-step="4">
 <div class="step-label">Step 4 / 12 · 魔法球</div>
 <h2>用户自由体验——方式A（<span id="methodALabel"></span>）</h2>
+<p style="font-size:16px;font-weight:600;color:#e91e63;margin-bottom:12px;">向用户强调：功能不完善，目前还只是 Demo，我们在测这种交互方式是否符合您的期待</p>
 <div class="prompt" id="methodAPrompt"></div>
 <p style="font-size:13px;color:var(--g5);margin-bottom:12px;">每次用户使用魔法球时，记录一条：</p>
 <div id="methodARecords"></div>
@@ -562,7 +563,20 @@ showToast('JSON 已导出');
 
 function copyJSON(){
 const d=collectData();
-navigator.clipboard.writeText(JSON.stringify(d,null,2)).then(()=>showToast('已复制到剪贴板'));
+const text=JSON.stringify(d,null,2);
+if(navigator.clipboard&&window.isSecureContext){
+navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板'));
+}else{
+const ta=document.createElement('textarea');
+ta.value=text;
+ta.style.position='fixed';
+ta.style.left='-9999px';
+document.body.appendChild(ta);
+ta.select();
+document.execCommand('copy');
+document.body.removeChild(ta);
+showToast('已复制到剪贴板');
+}
 }
 
 function newSession(){
