@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法球+开机引导 测试主持人工具</title>
+<style>
+:root { --black:#111; --g7:#555; --g5:#888; --g3:#ccc; --g1:#f5f5f5; --white:#fff; --line:#e5e5e5; --accent:#2563eb; --accent-light:#dbeafe; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",Arial,sans-serif;background:#fafafa;color:var(--black);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{position:fixed;top:0;left:0;width:200px;height:100vh;background:var(--white);border-right:1px solid var(--line);padding:16px 0;overflow-y:auto;z-index:20;}
+.sidebar-title{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--g5);padding:8px 16px;text-transform:uppercase;}
+.sidebar-item{display:block;width:100%;padding:8px 16px;font-size:13px;color:var(--g7);cursor:pointer;border:none;background:none;text-align:left;font-family:inherit;transition:all .1s;border-left:3px solid transparent;}
+.sidebar-item:hover{background:var(--g1);color:var(--black);}
+.sidebar-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+.sidebar-item .step-num{display:inline-block;width:20px;font-size:11px;color:var(--g5);}
+.sidebar-item.active .step-num{color:var(--accent);}
+.sidebar-section{font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--g3);padding:12px 16px 4px;text-transform:uppercase;}
+.main-content{margin-left:200px;flex:1;}
+.app{max-width:760px;margin:0 auto;padding:32px 24px 120px;}
+h1{font-size:24px;font-weight:700;margin-bottom:8px;}
+.subtitle{font-size:13px;color:var(--g5);margin-bottom:32px;}
+.step{display:none;}
+.step.active{display:block;}
+.step-label{font-size:11px;font-weight:500;letter-spacing:2px;color:var(--g5);text-transform:uppercase;margin-bottom:16px;}
+h2{font-size:18px;font-weight:600;margin-bottom:20px;}
+.prompt{background:var(--g1);padding:12px 16px;margin:12px 0;font-size:14px;color:var(--g7);border-radius:6px;}
+.field{margin-bottom:20px;}
+.field label{display:block;font-size:14px;font-weight:500;margin-bottom:6px;}
+.field input[type=text],.field input[type=date],.field input[type=number]{width:100%;padding:8px 12px;border:1px solid var(--g3);border-radius:6px;font-size:14px;font-family:inherit;}
+.radio-group{display:flex;flex-wrap:wrap;gap:8px;}
+.radio-group label{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--g3);border-radius:20px;font-size:13px;font-weight:400;cursor:pointer;transition:all .15s;}
+.radio-group input{display:none;}
+.radio-group input:checked+span{color:var(--accent);}
+.radio-group label:has(input:checked){border-color:var(--accent);background:var(--accent-light);}
+textarea{width:100%;min-height:80px;padding:10px 12px;border:1px solid var(--g3);border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;}
+table{width:100%;border-collapse:collapse;margin:12px 0;}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;}
+th{font-weight:600;background:var(--g1);font-size:12px;}
+.score-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);}
+.score-row:first-child{border-top:1px solid var(--line);}
+.score-left{flex:1;}
+.score-dim{font-size:14px;font-weight:600;}
+.score-desc{font-size:12px;color:var(--g7);}
+.score-right{display:flex;gap:24px;flex-shrink:0;margin-left:16px;}
+.score-col{text-align:center;}
+.score-col-label{font-size:11px;color:var(--g5);margin-bottom:6px;}
+.circles{display:flex;gap:6px;}
+.circle{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--g3);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--g5);cursor:pointer;transition:all .15s;}
+.circle:hover{border-color:var(--accent);background:var(--accent-light);}
+.circle.selected{border-color:var(--accent);background:var(--accent);color:var(--white);}
+.nav{position:fixed;bottom:0;left:200px;right:0;background:var(--white);border-top:1px solid var(--line);padding:12px 24px;display:flex;justify-content:space-between;align-items:center;z-index:10;}
+.nav-inner{max-width:760px;margin:0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;}
+.btn{padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-primary{background:var(--accent);color:var(--white);}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-secondary{background:var(--g1);color:var(--g7);}
+.btn-secondary:hover{background:#eee;}
+.btn-export{background:#059669;color:var(--white);}
+.btn-export:hover{background:#047857;}
+.progress{font-size:12px;color:var(--g5);}
+.record-entry{background:var(--g1);border-radius:8px;padding:14px;margin-bottom:10px;}
+.record-entry .row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.record-entry .row label{font-size:12px;color:var(--g7);min-width:60px;}
+.record-entry .row input,.record-entry .row select{flex:1;padding:4px 8px;border:1px solid var(--g3);border-radius:4px;font-size:13px;font-family:inherit;min-width:80px;}
+.add-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border:1px dashed var(--g3);border-radius:6px;font-size:13px;color:var(--g5);cursor:pointer;background:none;font-family:inherit;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+.summary-block{background:var(--g1);border-radius:8px;padding:16px;margin:8px 0;font-size:13px;}
+.summary-block h4{font-size:14px;margin-bottom:8px;}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:10px 24px;border-radius:8px;font-size:14px;z-index:100;display:none;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="layout">
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-title">测试流程</div>
+<div class="sidebar-section">准备</div>
+<button class="sidebar-item active" onclick="goStep(0)"><span class="step-num">0</span> 测试准备</button>
+<button class="sidebar-item" onclick="goStep(1)"><span class="step-num">1</span> 用户信息</button>
+<div class="sidebar-section">魔法球</div>
+<button class="sidebar-item" onclick="goStep(2)"><span class="step-num">2</span> 开场介绍</button>
+<button class="sidebar-item" onclick="goStep(3)"><span class="step-num">3</span> 演示场景</button>
+<button class="sidebar-item" onclick="goStep(4)"><span class="step-num">4</span> 方式A体验</button>
+<button class="sidebar-item" onclick="goStep(5)"><span class="step-num">5</span> 方式B体验</button>
+<button class="sidebar-item" onclick="goStep(6)"><span class="step-num">6</span> 对比打分</button>
+<button class="sidebar-item" onclick="goStep(7)"><span class="step-num">7</span> 场景回顾</button>
+<button class="sidebar-item" onclick="goStep(8)"><span class="step-num">8</span> 认知探索</button>
+<div class="sidebar-section">开机引导</div>
+<button class="sidebar-item" onclick="goStep(9)"><span class="step-num">9</span> 引导进入</button>
+<button class="sidebar-item" onclick="goStep(10)"><span class="step-num">10</span> 过程记录</button>
+<button class="sidebar-item" onclick="goStep(11)"><span class="step-num">11</span> 访谈</button>
+<div class="sidebar-section"></div>
+<button class="sidebar-item" onclick="goStep(12)"><span class="step-num">✓</span> 完成</button>
+</nav>
+<div class="main-content">
+<div class="app">
+<h1>魔法球+开机引导 测试主持人工具</h1>
+<div class="subtitle">按步骤操作，数据自动保存</div>
+
+<!-- Step 0: 测试准备 -->
+<div class="step active" data-step="0">
+<div class="step-label">Step 0 / 12</div>
+<h2>测试准备</h2>
+<div class="field"><label>用户姓名</label><input type="text" id="userName" placeholder="如 张三"></div>
+<div class="field"><label>日期</label><input type="date" id="testDate"></div>
+<div class="field"><label>主持人</label><input type="text" id="moderator"></div>
+<div class="field"><label>轮转顺序</label>
+<div class="radio-group" data-field="rotation">
+<label><input type="radio" name="rotation" value="先底部"><span>先底部</span></label>
+<label><input type="radio" name="rotation" value="先侧边"><span>先侧边</span></label>
+</div></div>
+<div class="field"><label>测试设备</label>
+<div class="radio-group" data-field="testDevice">
+<label><input type="radio" name="testDevice" value="中尺寸带壳"><span>中尺寸带壳</span></label>
+<label><input type="radio" name="testDevice" value="中尺寸无壳"><span>中尺寸无壳</span></label>
+<label><input type="radio" name="testDevice" value="大尺寸带壳"><span>大尺寸带壳</span></label>
+<label><input type="radio" name="testDevice" value="大尺寸无壳"><span>大尺寸无壳</span></label>
+</div></div>
+</div>
+
+<!-- Step 1: 用户信息 -->
+<div class="step" data-step="1">
+<div class="step-label">Step 1 / 12</div>
+<h2>用户信息采集</h2>
+<div class="prompt">"在正式开始之前，先简单了解一下你的基本情况。"</div>
+<div class="field"><label>性别</label>
+<div class="radio-group" data-field="gender">
+<label><input type="radio" name="gender" value="男"><span>男</span></label>
+<label><input type="radio" name="gender" value="女"><span>女</span></label>
+</div></div>
+<div class="field"><label>年龄段</label>
+<div class="radio-group" data-field="age">
+<label><input type="radio" name="age" value="18-29"><span>18-29</span></label>
+<label><input type="radio" name="age" value="30-40"><span>30-40</span></label>
+<label><input type="radio" name="age" value="40+"><span>40+</span></label>
+</div></div>
+<div class="field"><label>当前主用手机品牌</label>
+<div class="radio-group" data-field="phoneBrand">
+<label><input type="radio" name="phoneBrand" value="小米"><span>小米</span></label>
+<label><input type="radio" name="phoneBrand" value="苹果"><span>苹果</span></label>
+<label><input type="radio" name="phoneBrand" value="华为"><span>华为</span></label>
+<label><input type="radio" name="phoneBrand" value="OPPO"><span>OPPO</span></label>
+<label><input type="radio" name="phoneBrand" value="vivo"><span>vivo</span></label>
+<label><input type="radio" name="phoneBrand" value="荣耀"><span>荣耀</span></label>
+<label><input type="radio" name="phoneBrand" value="其他"><span>其他</span></label>
+</div></div>
+<div class="field"><label>小爱使用经验</label>
+<div class="radio-group" data-field="xiaoaiExp">
+<label><input type="radio" name="xiaoaiExp" value="从不用"><span>从不用</span></label>
+<label><input type="radio" name="xiaoaiExp" value="偶尔用"><span>偶尔用</span></label>
+<label><input type="radio" name="xiaoaiExp" value="经常用"><span>经常用</span></label>
+</div></div>
+<div class="field"><label>MiClaw使用经验</label>
+<div class="radio-group" data-field="miclawExp">
+<label><input type="radio" name="miclawExp" value="没听过"><span>没听过</span></label>
+<label><input type="radio" name="miclawExp" value="知道但没用过"><span>知道但没用过</span></label>
+<label><input type="radio" name="miclawExp" value="在用"><span>在用</span></label>
+</div></div>
+</div>
+
+<!-- Step 2: 开场介绍 -->
+<div class="step" data-step="2">
+<div class="step-label">Step 2 / 12 · 魔法球</div>
+<h2>开场介绍</h2>
+<div class="prompt">"接下来给你体验一个新功能。这是一个系统级的 AI 功能。<br><br>它的核心特点是：不需要唤醒词，通过手势从屏幕边缘拖出一个'魔法球'。<br><br>你可以拖动这个球到屏幕上任意位置，指着内容说出你想做的事——比如'帮我看看这个'、'帮我翻译'、'帮我记下来'之类的。<br><br>然后小爱会在超级岛上执行你的指令，并显示结果。"</div>
+<div class="prompt">"我先演示几个场景给你看，然后你自己来试。体验的时候，想到什么就说什么。"</div>
+</div>
+
+<!-- Step 3: 演示场景 -->
+<div class="step" data-step="3">
+<div class="step-label">Step 3 / 12 · 魔法球</div>
+<h2>演示核心场景</h2>
+<div class="prompt">"我来演示几个例子，你先看看它能做什么。"</div>
+<table>
+<tr><th>#</th><th>说</th><th>做</th></tr>
+<tr><td>1</td><td style="color:#e91e63;">聊天里朋友发了个活动地址</td><td>拖出球指向地址，说"去这儿多久"</td></tr>
+<tr><td>2</td><td style="color:#e91e63;">刷小红书看到喜欢的内容</td><td>拖出球指向卡片，说"收藏一下"</td></tr>
+<tr><td>3</td><td style="color:#e91e63;">淘宝看到一件衣服，想比个价</td><td>拖出球指向商品，说"找个便宜的"</td></tr>
+<tr><td>4</td><td style="color:#e91e63;">在地图上找某个区域的酒店</td><td>拖出球在区域转圈，说"给我搜这个区域内的酒店"</td></tr>
+<tr><td>5</td><td style="color:#e91e63;">日历上想加个事儿</td><td>拖出球指向某天，说"这天下午帮我约个牙医"</td></tr>
+<tr><td>6</td><td style="color:#e91e63;">想修一下照片</td><td>拖出球指向人脸，说"把我P白一点"</td></tr>
+</table>
+<div class="prompt">"大概就是这些类型的事情，但不限于这些。好，现在你来试试。"</div>
+</div>
+
+<!-- Step 4: 方式A -->
+<div class="step" data-step="4">
+<div class="step-label">Step 4 / 12 · 魔法球</div>
+<h2>用户自由体验——方式A（<span id="methodALabel"></span>）</h2>
+<div class="prompt" id="methodAPrompt"></div>
+<p style="font-size:13px;color:var(--g5);margin-bottom:12px;">每次用户使用魔法球时，记录一条：</p>
+<div id="methodARecords"></div>
+<button class="add-btn" onclick="addRecord('A')">+ 添加一条记录</button>
+<div class="field" style="margin-top:16px;">
+<label>其他观察备注</label>
+<textarea id="methodANotes" placeholder="卡点、犹豫、困惑等"></textarea>
+</div>
+</div>
+
+<!-- Step 5: 方式B -->
+<div class="step" data-step="5">
+<div class="step-label">Step 5 / 12 · 魔法球</div>
+<h2>用户自由体验——方式B（<span id="methodBLabel"></span>）</h2>
+<div class="prompt" id="methodBPrompt"></div>
+<p style="font-size:13px;color:var(--g5);margin-bottom:12px;">每次用户使用魔法球时，记录一条：</p>
+<div id="methodBRecords"></div>
+<button class="add-btn" onclick="addRecord('B')">+ 添加一条记录</button>
+<div class="field" style="margin-top:16px;">
+<label>切换后第一反应</label>
+<textarea id="methodBFirstReaction" rows="2" placeholder="更顺手 or 不习惯..."></textarea>
+</div>
+<div class="field">
+<label>其他观察备注</label>
+<textarea id="methodBNotes" placeholder="与方式A的差异、手势冲突等"></textarea>
+</div>
+</div>
+
+<!-- Step 6: 打分 -->
+<div class="step" data-step="6">
+<div class="step-label">Step 6 / 12 · 魔法球</div>
+<h2>对比打分</h2>
+<div class="prompt">"刚才你分别体验了底部拖出和侧边拖出两种方式，现在给每种方式打个分，1-5分。"</div>
+<p style="font-size:13px;color:var(--g7);margin:12px 0;">1分＝非常不认同　　3分＝中立/不好说　　5分＝非常认同</p>
+<div style="display:flex;justify-content:flex-end;gap:24px;padding-right:4px;margin-bottom:4px;">
+<div style="width:160px;text-align:center;font-size:11px;color:var(--g5);">底部出球</div>
+<div style="width:160px;text-align:center;font-size:11px;color:var(--g5);">侧边出球</div>
+</div>
+<div id="scoreRows"></div>
+<div class="prompt" style="margin-top:16px;">"这个分是怎么考虑的？有没有哪个具体场景让你感受特别明显？"</div>
+<div class="field" style="margin-top:12px;">
+<label>打分追问记录</label>
+<textarea id="scoreNotes" rows="4" placeholder="用户对各维度打分的解释..."></textarea>
+</div>
+</div>
+
+<!-- Step 7: 场景回顾 -->
+<div class="step" data-step="7">
+<div class="step-label">Step 7 / 12 · 魔法球</div>
+<h2>场景回顾与评价</h2>
+<p style="font-size:13px;color:#e91e63;margin-bottom:12px;">访谈员只需要记录"最特别""最动人"的观点即可，不需要全部记录</p>
+<div class="prompt">"回想一下刚才的体验——"</div>
+<div class="field"><label>1. 在不同场景下，你会希望这个球能帮你做什么？</label><textarea id="scene_q1"></textarea></div>
+<div class="field"><label>2. 哪些场景你觉得特别好用？哪些不好用？</label><textarea id="scene_q3"></textarea></div>
+<div class="field"><label>3. 在刚才的体验里，哪些时候结果跟你预期的不太一样？</label><textarea id="scene_q4"></textarea></div>
+</div>
+
+<!-- Step 8: 认知探索 -->
+<div class="step" data-step="8">
+<div class="step-label">Step 8 / 12 · 魔法球</div>
+<h2>认知探索</h2>
+<div class="field"><label>1. 你觉得这个球是个什么东西？有什么能力？</label><textarea id="cog_q1"></textarea></div>
+<div class="field"><label>2. 对你来说它的特别之处在哪里？</label><textarea id="cog_q2"></textarea></div>
+<div class="field"><label>3. 什么情况下你会用它，什么情况下不会？</label><textarea id="cog_q3"></textarea></div>
+</div>
+
+<!-- Step 9: 开机引导-设置 -->
+<div class="step" data-step="9">
+<div class="step-label">Step 9 / 12 · 开机引导</div>
+<h2>开机引导 · 引导进入</h2>
+<div class="prompt">"好，魔法球部分结束了。接下来我们再体验另一个功能，很快的。"</div>
+<div class="prompt">"现在假设你刚买了一台新的小米手机，我们模拟一下开机的过程。"</div>
+<div class="prompt">"这台手机你打算当全新的用，还是会迁移旧手机的数据？"</div>
+<div class="field"><label>用户选择</label>
+<div class="radio-group" data-field="oobe_setup">
+<label><input type="radio" name="oobe_setup" value="设为新机"><span>设为新机</span></label>
+<label><input type="radio" name="oobe_setup" value="迁移数据"><span>迁移数据</span></label>
+</div></div>
+<div class="prompt">"好，那你就按照自己的习惯来操作，走完这个开机流程就行。"</div>
+</div>
+
+<!-- Step 10: 开机引导-过程记录 -->
+<div class="step" data-step="10">
+<div class="step-label">Step 10 / 12 · 开机引导</div>
+<h2>开机引导 · 过程记录</h2>
+<p style="font-size:13px;color:var(--g5);margin-bottom:12px;">主持人不干预，安静观察。每次尝试记录一条：</p>
+<div id="oobeRecords"></div>
+<button class="add-btn" onclick="addOobeRecord()">+ 添加一次尝试</button>
+</div>
+
+<!-- Step 11: 开机引导-访谈 -->
+<div class="step" data-step="11">
+<div class="step-label">Step 11 / 12 · 开机引导</div>
+<h2>开机引导 · 体验后访谈</h2>
+<div class="field"><label>1. "走完了，简单说说感受？你觉得那是一个怎样的过程？"</label><textarea id="oobe_q1"></textarea></div>
+<div class="field"><label>2. "有没有哪个瞬间让你觉得惊喜的？或者反感的？"</label><textarea id="oobe_q2"></textarea></div>
+<div class="field"><label>3. "如果这个过程可以一键跳过，你会跳吗？为什么？"</label><textarea id="oobe_q3"></textarea></div>
+<div class="field"><label>4. "走完之后你觉得它了解你了吗？了解了什么？"</label><textarea id="oobe_q4"></textarea></div>
+<div class="field"><label>5. "如果这是你的新手机，你更愿意用刚才这种开机过程，还是以前那种经典的？"</label><textarea id="oobe_q5"></textarea></div>
+</div>
+
+<!-- Step 12: 完成 -->
+<div class="step" data-step="12">
+<div class="step-label">Step 12 / 12</div>
+<h2>测试完成</h2>
+<div class="prompt">"今天的测试全部结束了，非常感谢你的时间和反馈！这是给你的礼品卡。"</div>
+<div id="summary"></div>
+<div style="display:flex;gap:12px;margin-top:24px;">
+<button class="btn btn-export" onclick="exportJSON()">导出 JSON</button>
+<button class="btn btn-primary" onclick="copyJSON()">复制到剪贴板</button>
+<button class="btn btn-secondary" onclick="newSession()">开始新一场测试</button>
+</div>
+</div>
+</div>
+</div><!-- close main-content -->
+</div><!-- close layout -->
+
+<div class="nav">
+<div class="nav-inner">
+<button class="btn btn-secondary" id="prevBtn" onclick="prevStep()">上一步</button>
+<span class="progress" id="progressText"></span>
+<button class="btn btn-primary" id="nextBtn" onclick="nextStep()">下一步</button>
+</div>
+</div>
+
+<script>
+const TOTAL=12;
+let current=0;
+const SCORE_DIMS=[
+{key:'smoothness',name:'操作顺畅度',desc:'拖出来顺不顺手'},
+{key:'reach',name:'可达性',desc:'能否轻松定位到屏幕任意位置'},
+{key:'mistouch',name:'误触/误操作',desc:'使用中有没有不想触发却触发的情况'},
+{key:'scene',name:'场景适配',desc:'不同场景下都好用'},
+{key:'learn',name:'学习成本',desc:'容易学会和记住'},
+{key:'overall',name:'综合偏好',desc:'总体更愿意用这种方式'}
+];
+let scores={};
+SCORE_DIMS.forEach(d=>{scores[d.key+'_bottom']=0;scores[d.key+'_side']=0;});
+
+function init(){
+document.getElementById('testDate').value=new Date().toISOString().slice(0,10);
+buildScoreRows();
+addRecord('A');addRecord('A');
+addRecord('B');addRecord('B');
+addOobeRecord();
+updateNav();
+loadFromStorage();
+}
+
+function buildScoreRows(){
+const c=document.getElementById('scoreRows');
+SCORE_DIMS.forEach(d=>{
+const row=document.createElement('div');
+row.className='score-row';
+row.innerHTML=`<div class="score-left"><div class="score-dim">${d.name}</div><div class="score-desc">${d.desc}</div></div>
+<div class="score-right">
+<div class="score-col"><div class="circles">${[1,2,3,4,5].map(n=>`<div class="circle" data-key="${d.key}_bottom" data-val="${n}">${n}</div>`).join('')}</div></div>
+<div class="score-col"><div class="circles">${[1,2,3,4,5].map(n=>`<div class="circle" data-key="${d.key}_side" data-val="${n}">${n}</div>`).join('')}</div></div>
+</div>`;
+c.appendChild(row);
+});
+c.addEventListener('click',e=>{
+if(!e.target.classList.contains('circle'))return;
+const key=e.target.dataset.key,val=+e.target.dataset.val;
+scores[key]=val;
+c.querySelectorAll(`.circle[data-key="${key}"]`).forEach(el=>el.classList.remove('selected'));
+e.target.classList.add('selected');
+saveToStorage();
+});
+}
+
+let recordCountA=0,recordCountB=0;
+function addRecord(method){
+const container=document.getElementById(`method${method}Records`);
+const idx=method==='A'?++recordCountA:++recordCountB;
+const div=document.createElement('div');
+div.className='record-entry';
+div.innerHTML=`<div style="font-size:12px;font-weight:600;margin-bottom:6px;">第${idx}次使用</div>
+<div class="row"><label>场景</label><input type="text" class="rec-scene" placeholder="如：微信聊天"></div>
+<div class="row"><label>握持</label><select class="rec-grip"><option value="">选择</option><option>单手右</option><option>单手左</option><option>双手</option></select>
+<label>激活</label><select class="rec-activate"><option value="">选择</option><option>成功</option><option>失败</option><option>误触</option></select>
+<label>指向</label><select class="rec-point"><option value="">选择</option><option>精确</option><option>大致</option></select></div>
+<div class="row"><label>指令</label><input type="text" class="rec-command" placeholder="用户说了什么（原话）"></div>
+<div class="row"><label>备注</label><input type="text" class="rec-note" placeholder="卡点、犹豫等"></div>`;
+container.appendChild(div);
+}
+
+function getRecords(method){
+const entries=document.querySelectorAll(`#method${method}Records .record-entry`);
+return Array.from(entries).map(e=>({
+scene:e.querySelector('.rec-scene')?.value||'',
+grip:e.querySelector('.rec-grip')?.value||'',
+activate:e.querySelector('.rec-activate')?.value||'',
+point:e.querySelector('.rec-point')?.value||'',
+command:e.querySelector('.rec-command')?.value||'',
+note:e.querySelector('.rec-note')?.value||''
+})).filter(r=>r.scene||r.command);
+}
+
+let oobeRecordCount=0;
+function addOobeRecord(){
+const container=document.getElementById('oobeRecords');
+const idx=++oobeRecordCount;
+const div=document.createElement('div');
+div.className='record-entry';
+div.innerHTML=`<div style="font-size:12px;font-weight:600;margin-bottom:6px;">第${idx}次尝试</div>
+<div class="row"><label>操作路径</label><input type="text" class="oobe-path" placeholder="用户做了什么、说了什么"></div>
+<div class="row"><label>停顿点</label><input type="text" class="oobe-pause" placeholder="在哪里犹豫了"></div>
+<div class="row"><label>跳过步骤</label><input type="text" class="oobe-skip" placeholder="跳过了哪些"></div>
+<div class="row"><label>用户评价</label><input type="text" class="oobe-other" placeholder="用户自述心情"></div>`;
+container.appendChild(div);
+}
+
+function getOobeRecords(){
+const entries=document.querySelectorAll('#oobeRecords .record-entry');
+return Array.from(entries).map(e=>({
+path:e.querySelector('.oobe-path')?.value||'',
+pause:e.querySelector('.oobe-pause')?.value||'',
+skip:e.querySelector('.oobe-skip')?.value||'',
+other:e.querySelector('.oobe-other')?.value||''
+})).filter(r=>r.path||r.pause||r.skip||r.other);
+}
+
+function getRadio(name){
+const el=document.querySelector(`input[name="${name}"]:checked`);
+return el?el.value:'';
+}
+
+function collectData(){
+return {
+userName:document.getElementById('userName').value,
+testDate:document.getElementById('testDate').value,
+moderator:document.getElementById('moderator').value,
+rotation:getRadio('rotation'),
+gender:getRadio('gender'),
+age:getRadio('age'),
+phoneBrand:getRadio('phoneBrand'),
+testDevice:getRadio('testDevice'),
+xiaoaiExp:getRadio('xiaoaiExp'),
+miclawExp:getRadio('miclawExp'),
+methodA_records:getRecords('A'),
+methodA_notes:document.getElementById('methodANotes').value,
+methodB_records:getRecords('B'),
+methodB_firstReaction:document.getElementById('methodBFirstReaction').value,
+methodB_notes:document.getElementById('methodBNotes').value,
+scores:scores,
+scoreNotes:document.getElementById('scoreNotes').value,
+scene_q1:document.getElementById('scene_q1').value,
+scene_q2:document.getElementById('scene_q2').value,
+scene_q3:document.getElementById('scene_q3').value,
+scene_q4:document.getElementById('scene_q4').value,
+scene_q5:document.getElementById('scene_q5').value,
+cog_q1:document.getElementById('cog_q1').value,
+cog_q2:document.getElementById('cog_q2').value,
+cog_q3:document.getElementById('cog_q3').value,
+oobe_setup:getRadio('oobe_setup'),
+oobe_round:document.getElementById('oobe_round')?.value||'1',
+oobe_records:getOobeRecords(),
+oobe_q1:document.getElementById('oobe_q1').value,
+oobe_q2:document.getElementById('oobe_q2').value,
+oobe_q3:document.getElementById('oobe_q3').value,
+oobe_q4:document.getElementById('oobe_q4').value,
+oobe_q5:document.getElementById('oobe_q5').value
+};
+}
+
+function saveToStorage(){
+try{localStorage.setItem('magicball_current',JSON.stringify(collectData()));}catch(e){}
+}
+
+function loadFromStorage(){
+try{
+const d=JSON.parse(localStorage.getItem('magicball_current'));
+if(!d)return;
+// 基础字段
+const textFields={userName:'userName',testDate:'testDate',moderator:'moderator'};
+Object.entries(textFields).forEach(([k,id])=>{if(d[k]){const el=document.getElementById(id);if(el)el.value=d[k];}});
+// 单选
+['rotation','gender','age','phoneBrand','testDevice','xiaoaiExp','miclawExp','oobe_setup'].forEach(name=>{if(d[name])setRadio(name,d[name]);});
+// 打分
+if(d.scores){
+scores=d.scores;
+Object.entries(scores).forEach(([k,v])=>{
+if(v){document.querySelectorAll(`.circle[data-key="${k}"][data-val="${v}"]`).forEach(el=>el.classList.add('selected'));}
+});
+}
+// 所有textarea
+const textareas={methodANotes:'methodANotes',methodBFirstReaction:'methodBFirstReaction',methodBNotes:'methodBNotes',scoreNotes:'scoreNotes',
+scene_q1:'scene_q1',scene_q2:'scene_q2',scene_q3:'scene_q3',scene_q4:'scene_q4',scene_q5:'scene_q5',
+cog_q1:'cog_q1',cog_q2:'cog_q2',cog_q3:'cog_q3',
+oobe_q1:'oobe_q1',oobe_q2:'oobe_q2',oobe_q3:'oobe_q3',oobe_q4:'oobe_q4',oobe_q5:'oobe_q5'};
+Object.entries(textareas).forEach(([k,id])=>{if(d[k]){const el=document.getElementById(id);if(el)el.value=d[k];}});
+// 开机引导轮次
+if(d.oobe_round){const el=document.getElementById('oobe_round');if(el)el.value=d.oobe_round;}
+}catch(e){}
+}
+
+function setRadio(name,val){
+const el=document.querySelector(`input[name="${name}"][value="${val}"]`);
+if(el)el.checked=true;
+}
+
+function goStep(n){
+saveToStorage();
+showStep(n);
+}
+
+function showStep(n){
+document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+document.querySelector(`[data-step="${n}"]`).classList.add('active');
+current=n;
+updateNav();
+updateMethodLabels();
+updateSidebar();
+if(n===12)buildSummary();
+window.scrollTo(0,0);
+saveToStorage();
+}
+
+function updateSidebar(){
+document.querySelectorAll('.sidebar-item').forEach(el=>{
+el.classList.remove('active');
+if(el.getAttribute('onclick')===`goStep(${current})`)el.classList.add('active');
+});
+}
+
+function nextStep(){if(current<TOTAL){showStep(current+1);}}
+function prevStep(){if(current>0){showStep(current-1);}}
+
+function updateNav(){
+document.getElementById('prevBtn').style.visibility=current===0?'hidden':'visible';
+document.getElementById('nextBtn').textContent=current===TOTAL?'完成':'下一步';
+document.getElementById('nextBtn').style.display=current===TOTAL?'none':'';
+document.getElementById('progressText').textContent=`${current} / ${TOTAL}`;
+}
+
+function updateMethodLabels(){
+const rot=getRadio('rotation');
+const a=rot==='先侧边'?'侧边':'底部';
+const b=a==='底部'?'侧边':'底部';
+const al=document.getElementById('methodALabel');
+const bl=document.getElementById('methodBLabel');
+if(al)al.textContent=a;
+if(bl)bl.textContent=b;
+const ap=document.getElementById('methodAPrompt');
+const bp=document.getElementById('methodBPrompt');
+if(ap)ap.textContent=`"现在你用自己的手机，打开你平时常用的 App，随便刷一刷，想到什么就用这个球试试。用${a}这种方式来拖出球。"`;
+if(bp)bp.textContent=`"好，接下来我们换另一种方式。现在改用${b}来拖出球。你可以试试刚才同样的场景，也可以试新的。"`;
+}
+
+function buildSummary(){
+const d=collectData();
+const s=document.getElementById('summary');
+s.innerHTML=`
+<div class="summary-block"><h4>基本信息</h4>${d.userName} | ${d.gender} | ${d.age} | ${d.phoneBrand} | ${d.testDevice} | 小爱:${d.xiaoaiExp} | MiClaw:${d.miclawExp}</div>
+<div class="summary-block"><h4>打分（底部 / 侧边）</h4>
+${SCORE_DIMS.map(dim=>`${dim.name}: ${d.scores[dim.key+'_bottom']||'-'} / ${d.scores[dim.key+'_side']||'-'}`).join('<br>')}</div>
+<div class="summary-block"><h4>体验记录</h4>方式A: ${d.methodA_records.length}条 | 方式B: ${d.methodB_records.length}条</div>
+<div class="summary-block"><h4>开机引导</h4>${d.oobe_setup} | 第${d.oobe_round}次</div>`;
+}
+
+function exportJSON(){
+const d=collectData();
+const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+const a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download=`魔法球测试_${d.userName||'unknown'}_${d.testDate||'nodate'}.json`;
+a.click();
+showToast('JSON 已导出');
+}
+
+function copyJSON(){
+const d=collectData();
+navigator.clipboard.writeText(JSON.stringify(d,null,2)).then(()=>showToast('已复制到剪贴板'));
+}
+
+function newSession(){
+if(!confirm('确定要开始新一场测试吗？当前数据将被清除。'))return;
+localStorage.removeItem('magicball_current');
+location.reload();
+}
+
+function showToast(msg){
+const t=document.getElementById('toast');
+t.textContent=msg;t.style.display='block';
+setTimeout(()=>t.style.display='none',2000);
+}
+
+document.addEventListener('input',()=>saveToStorage());
+document.addEventListener('change',()=>{saveToStorage();updateMethodLabels();});
+
+init();
+</script>
+</body>
+</html>
