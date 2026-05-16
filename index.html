@@ -437,16 +437,13 @@ methodB_firstReaction:document.getElementById('methodBFirstReaction').value,
 methodB_notes:document.getElementById('methodBNotes').value,
 scores:scores,
 scoreNotes:document.getElementById('scoreNotes').value,
-scene_q1:document.getElementById('scene_q1').value,
-scene_q2:document.getElementById('scene_q2').value,
-scene_q3:document.getElementById('scene_q3').value,
-scene_q4:document.getElementById('scene_q4').value,
-scene_q5:document.getElementById('scene_q5').value,
+scene_q1:document.getElementById('scene_q1')?.value||'',
+scene_q3:document.getElementById('scene_q3')?.value||'',
+scene_q4:document.getElementById('scene_q4')?.value||'',
 cog_q1:document.getElementById('cog_q1').value,
 cog_q2:document.getElementById('cog_q2').value,
 cog_q3:document.getElementById('cog_q3').value,
 oobe_setup:getRadio('oobe_setup'),
-oobe_round:document.getElementById('oobe_round')?.value||'1',
 oobe_records:getOobeRecords(),
 oobe_q1:document.getElementById('oobe_q1').value,
 oobe_q2:document.getElementById('oobe_q2').value,
@@ -478,12 +475,10 @@ if(v){document.querySelectorAll(`.circle[data-key="${k}"][data-val="${v}"]`).for
 }
 // 所有textarea
 const textareas={methodANotes:'methodANotes',methodBFirstReaction:'methodBFirstReaction',methodBNotes:'methodBNotes',scoreNotes:'scoreNotes',
-scene_q1:'scene_q1',scene_q2:'scene_q2',scene_q3:'scene_q3',scene_q4:'scene_q4',scene_q5:'scene_q5',
+scene_q1:'scene_q1',scene_q3:'scene_q3',scene_q4:'scene_q4',
 cog_q1:'cog_q1',cog_q2:'cog_q2',cog_q3:'cog_q3',
 oobe_q1:'oobe_q1',oobe_q2:'oobe_q2',oobe_q3:'oobe_q3',oobe_q4:'oobe_q4',oobe_q5:'oobe_q5'};
 Object.entries(textareas).forEach(([k,id])=>{if(d[k]){const el=document.getElementById(id);if(el)el.value=d[k];}});
-// 开机引导轮次
-if(d.oobe_round){const el=document.getElementById('oobe_round');if(el)el.value=d.oobe_round;}
 }catch(e){}
 }
 
@@ -564,19 +559,22 @@ showToast('JSON 已导出');
 function copyJSON(){
 const d=collectData();
 const text=JSON.stringify(d,null,2);
-if(navigator.clipboard&&window.isSecureContext){
-navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板'));
-}else{
 const ta=document.createElement('textarea');
 ta.value=text;
 ta.style.position='fixed';
-ta.style.left='-9999px';
+ta.style.top='0';
+ta.style.left='0';
+ta.style.opacity='0';
 document.body.appendChild(ta);
+ta.focus();
 ta.select();
+try{
 document.execCommand('copy');
-document.body.removeChild(ta);
-showToast('已复制到剪贴板');
+showToast('复制成功');
+}catch(e){
+showToast('复制失败，请手动复制');
 }
+document.body.removeChild(ta);
 }
 
 function newSession(){
