@@ -152,6 +152,9 @@ th{font-weight:600;background:var(--g1);font-size:12px;}
 <label><input type="radio" name="xiaoaiExp" value="偶尔用"><span>偶尔用</span></label>
 <label><input type="radio" name="xiaoaiExp" value="经常用"><span>经常用</span></label>
 </div></div>
+<div class="field"><label>小爱唤醒方式</label>
+<input type="text" id="xiaoaiWakeup" placeholder="请填写平时唤醒小爱的方式">
+</div>
 <div class="field"><label>MiClaw使用经验</label>
 <div class="radio-group" data-field="miclawExp">
 <label><input type="radio" name="miclawExp" value="没听过"><span>没听过</span></label>
@@ -429,6 +432,7 @@ age:getRadio('age'),
 phoneBrand:getRadio('phoneBrand'),
 testDevice:getRadio('testDevice'),
 xiaoaiExp:getRadio('xiaoaiExp'),
+xiaoaiWakeup:document.getElementById('xiaoaiWakeup').value,
 miclawExp:getRadio('miclawExp'),
 methodA_records:getRecords('A'),
 methodA_notes:document.getElementById('methodANotes').value,
@@ -462,7 +466,7 @@ try{
 const d=JSON.parse(localStorage.getItem('magicball_current'));
 if(!d)return;
 // 基础字段
-const textFields={userName:'userName',testDate:'testDate',moderator:'moderator'};
+const textFields={userName:'userName',testDate:'testDate',moderator:'moderator',xiaoaiWakeup:'xiaoaiWakeup'};
 Object.entries(textFields).forEach(([k,id])=>{if(d[k]){const el=document.getElementById(id);if(el)el.value=d[k];}});
 // 单选
 ['rotation','gender','age','phoneBrand','testDevice','xiaoaiExp','miclawExp','oobe_setup'].forEach(name=>{if(d[name])setRadio(name,d[name]);});
@@ -539,7 +543,7 @@ function buildSummary(){
 const d=collectData();
 const s=document.getElementById('summary');
 s.innerHTML=`
-<div class="summary-block"><h4>基本信息</h4>${d.userName} | ${d.gender} | ${d.age} | ${d.phoneBrand} | ${d.testDevice} | 小爱:${d.xiaoaiExp} | MiClaw:${d.miclawExp}</div>
+<div class="summary-block"><h4>基本信息</h4>${d.userName} | ${d.gender} | ${d.age} | ${d.phoneBrand} | ${d.testDevice} | 小爱:${d.xiaoaiExp} | 唤醒方式:${d.xiaoaiWakeup||'-'} | MiClaw:${d.miclawExp}</div>
 <div class="summary-block"><h4>打分（底部 / 侧边）</h4>
 ${SCORE_DIMS.map(dim=>`${dim.name}: ${d.scores[dim.key+'_bottom']||'-'} / ${d.scores[dim.key+'_side']||'-'}`).join('<br>')}</div>
 <div class="summary-block"><h4>体验记录</h4>方式A: ${d.methodA_records.length}条 | 方式B: ${d.methodB_records.length}条</div>
